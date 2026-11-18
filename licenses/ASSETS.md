@@ -2,7 +2,6 @@
 
 本工具不是任何相机或手机品牌的官方产品。品牌名和图形用于标识拍摄设备，不表示品牌认可；分发者须自行遵守相应品牌的使用规范。
 
-- **示例照片**：美国国家公园管理局 Glacier National Park，Wild Goose Island Overlook 页面主图「A cloudy view of Wild Goose Island」。https://www.nps.gov/places/wild-goose-island-overlook.htm 。本地保存 1600 像素版本；示例相机参数仅为排版演示。
 - **华为**：华为全球站页首组合标识，https://www.huawei.com/en/ 。取自 https://www.huawei.com/-/media/hcomponent-header/1.0.1.20260908162100/component/img/huawei_logo.png ，分别截出透明底花瓣和字标。
 - **尼康黄色方标**：Nikon Brand Symbol，https://www.nikon.com/company/corporate/brand/brand_symbol/img/logo.svg 。
 - **佳能**：Canon Global 页首矢量，https://global.canon/01cmn/img/common/logo.svg ，仅保留红色 Canon 字标路径。

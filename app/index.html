@@ -26,14 +26,16 @@
     <span class="mark" title="映框" role="img" aria-label="映框"><svg aria-hidden="true"><use href="#i-mark"/></svg></span>
     <div class="source"><strong id="file-name"></strong><span id="file-info"></span></div>
     <nav aria-label="照片操作">
+      <button id="folder" title="添加文件夹" aria-label="添加文件夹"><svg aria-hidden="true"><use href="#i-open"/></svg></button>
       <select id="theme" aria-label="界面主题" title="界面主题"><option value="system">随系统</option><option value="light">浅色</option><option value="dark">深色</option></select>
-      <button id="edit" title="照片参数" aria-label="照片参数" ><svg aria-hidden="true"><use href="#i-edit"/></svg></button>
-      <button id="open" title="打开照片 (Ctrl+O)" aria-label="打开照片 (Ctrl+O)" ><svg aria-hidden="true"><use href="#i-open"/></svg></button>
+      <button id="edit" disabled title="照片参数" aria-label="照片参数" ><svg aria-hidden="true"><use href="#i-edit"/></svg></button>
+      <button id="open" title="打开照片 (Ctrl+O)" aria-label="打开照片 (Ctrl+O)" ><svg aria-hidden="true"><use href="#i-plus"/></svg></button>
     </nav>
   </header>
   <main>
-    <div class="stage" id="stage"><div id="viewport"><canvas id="preview" aria-label="边框实时预览"></canvas></div><div class="drop-hint"><svg aria-hidden="true"><use href="#i-open"/></svg></div></div>
+    <div class="stage" id="stage"><div id="viewport"><button id="empty" title="添加照片"><svg><use href="#i-plus"/></svg>添加照片</button><canvas hidden id="preview" aria-label="边框实时预览"></canvas></div><div class="drop-hint"><svg aria-hidden="true"><use href="#i-open"/></svg></div></div>
     <aside aria-label="边框设置">
+      <select hidden id="queue" title="切换照片" aria-label="已添加的照片"></select>
       <div class="controls">
         <section aria-label="边框样式"><span class="group-icon" title="边框样式"><svg aria-hidden="true"><use href="#i-frame"/></svg></span><div class="group-body"><div id="styles"><button data-style="white" title="经典白框" aria-label="经典白框" aria-pressed="true"><span class="thumb white"><i></i></span></button><button data-style="blur" title="背景虚化" aria-label="背景虚化" aria-pressed="false"><span class="thumb blur"><i></i></span></button></div></div></section>
         <section aria-label="画布比例与适配"><span class="group-icon" title="画布比例与适配"><svg aria-hidden="true"><use href="#i-ratio"/></svg></span><div class="group-body"><div id="ratios"></div><div id="custom" hidden><input id="rw" title="宽" aria-label="宽" type="number" min="1" max="10000" value="5">:<input id="rh" title="高" aria-label="高" type="number" min="1" max="10000" value="4"></div><div id="fit" role="group" aria-label="照片适配"><button id="contain" title="完整保留" aria-label="完整保留" aria-pressed="true"><svg aria-hidden="true"><use href="#i-contain"/></svg></button><button id="cover" title="居中裁切" aria-label="居中裁切" aria-pressed="false"><svg aria-hidden="true"><use href="#i-cover"/></svg></button></div></div></section>
@@ -43,7 +45,8 @@
       <footer><output id="output" aria-label="导出尺寸"></output><button id="export" title="导出照片" aria-label="导出照片" disabled><svg aria-hidden="true"><use href="#i-save"/></svg></button></footer>
     </aside>
   </main>
-  <input type="file" id="picker" accept="image/jpeg,image/png,image/webp" hidden>
+  <input type="file" id="picker" multiple accept=".jpg,.jpeg,.png,.webp,.bmp,.avif,.gif" hidden>
+  <input type="file" id="directory" webkitdirectory multiple hidden>
   <dialog id="editor" aria-labelledby="meta-title"><form method="dialog">
     <div class="dialog-head"><h2 id="meta-title">照片参数</h2><button id="cancel" title="取消" aria-label="取消" type="button"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div>
     <p id="meta-note"></p><div id="fields"></div>

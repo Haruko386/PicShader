@@ -38,17 +38,71 @@ for(const [key,label] of Object.entries(fields)){const wrapper=document.createEl
 const toggle=document.createElement('label');toggle.className='model-toggle';toggle.innerHTML='<input type="checkbox" id="show-model"> 显示型号';byId('fields').after(toggle);
 byId('edit').onclick=()=>{for(const key of Object.keys(fields))byId('field-'+key).value=state.meta[key];byId('show-model').checked=state.showModel;byId('meta-note').textContent=state.note;byId('editor').returnValue='';byId('editor').showModal();};byId('cancel').onclick=()=>byId('editor').close('cancel');
 byId('editor').addEventListener('close',()=>{if(byId('editor').returnValue!=='apply')return;for(const key of Object.keys(fields))state.meta[key]=byId('field-'+key).value.trim();state.showModel=byId('show-model').checked;refresh();});
-function setPhoto(photo,name,meta,demo,hasExif){state.image=photo;state.name=name;state.meta=meta;state.showModel=false;state.note=demo?'示例参数，非原始 EXIF。':hasExif?'':'无 EXIF，可手动填写。';byId('file-name').textContent=name;byId('file-info').textContent=photo.width+' × '+photo.height+' px  ·  '+(demo?'示例参数':hasExif?'EXIF':'无 EXIF');byId('brand').value=Frame.identify(meta.make,meta.model);refreshVariants();refresh();}
-async function openPhoto(file){
-  if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)&&!(/[.](jpe?g|png|webp)$/i.test(file.name)&&!file.type)){say('请选择 JPEG、PNG 或 WebP 照片');return;}
-  if(file.size>100*1024*1024){say('请选择小于 100 MB 的照片');return;}
-  const serial=++importId,url=URL.createObjectURL(file);state.loading=true;byId('export').disabled=true;byId('stage').setAttribute('aria-busy','true');
-  try{const [photo,tags]=await Promise.all([Frame.loadImage(url),exifr.parse(file,{gps:false}).catch(()=>null)]);if(serial!==importId)return;const meta=Frame.metadata(tags || {});setPhoto(photo,file.name,meta,false,Object.values(meta).some(Boolean));}
-  catch{if(serial===importId)say('无法打开这张照片，请检查文件是否损坏。');}
-  finally{URL.revokeObjectURL(url);if(serial===importId){state.loading=false;byId('stage').removeAttribute('aria-busy');refresh();}}
+const files = [];
+const rasterPattern = /[.](jpe?g|png|webp|bmp|avif|gif)$/i;
+let current = -1;
+function supported(file) {return rasterPattern.test(file.name);}
+async function decodePhoto(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const [photo,tags] = await Promise.all([Frame.loadImage(url),exifr.parse(file,{gps:false}).catch(()=>null)]);
+    return {photo,meta:Frame.metadata(tags || {})};
+  } finally {URL.revokeObjectURL(url);}
 }
-byId('open').onclick=()=>byId('picker').click();byId('picker').onchange=event=>{openPhoto(event.target.files[0]);event.target.value='';};
-window.addEventListener('dragover',event=>event.preventDefault());window.addEventListener('drop',event=>{event.preventDefault();byId('stage').classList.remove('drag');if(event.dataTransfer.files.length)openPhoto(event.dataTransfer.files[0]);});byId('stage').ondragover=()=>byId('stage').classList.add('drag');byId('stage').ondragleave=event=>{if(!byId('stage').contains(event.relatedTarget))byId('stage').classList.remove('drag');};
+async function showPhoto(index) {
+  const entry = files[index];
+  if (!entry) return;
+  if (state.image && files[current]) files[current].edits = {
+    meta:{...state.meta}, brand:byId('brand').value, variant:byId('variant').value, showModel:state.showModel
+  };
+  current=index;
+  const serial=++importId;
+  ++revision;
+  state.image=null; state.loading=true;
+  byId('queue').value=String(index);
+  byId('file-name').textContent=entry.file.name;
+  byId('file-info').textContent='读取中…';
+  byId('preview').hidden=true; byId('empty').hidden=true;
+  byId('output').textContent='';
+  byId('edit').disabled=byId('export').disabled=true;
+  try {
+    const {photo,meta}=await decodePhoto(entry.file);
+    if (serial!==importId) return;
+    const saved=entry.edits;
+    state.image=photo;state.name=entry.file.name;state.meta=saved?.meta || meta;state.showModel=saved?.showModel || false;
+    const hasExif=Object.values(meta).some(Boolean);
+    state.note=hasExif?'':'无 EXIF，可手动填写。';
+    byId('file-info').textContent=photo.width+' × '+photo.height+' px · '+(hasExif?'EXIF':'无 EXIF');
+    byId('brand').value=saved?.brand || Frame.identify(meta.make,meta.model);
+    refreshVariants(); if(saved)byId('variant').value=saved.variant;
+    byId('preview').hidden=false; byId('edit').disabled=false;
+  } catch(error) {
+    if(serial!==importId)return;
+    byId('file-info').textContent='无法读取';
+    byId('empty').hidden=false;
+    say('无法读取 '+entry.file.name+'，请检查文件或切换照片。');
+  } finally {if(serial===importId){state.loading=false;refresh();}}
+}
+function addFiles(input) {
+  const accepted=Array.from(input).filter(supported);
+  if(!accepted.length){say('未找到支持的照片');return;}
+  const start=files.length, options=document.createDocumentFragment();
+  for(const file of accepted){
+    const label=file.webkitRelativePath || file.name;
+    options.append(new Option((files.length+1)+' · '+label,String(files.length)));
+    files.push({file});
+  }
+  byId('queue').append(options);byId('queue').hidden=files.length<2;
+  return showPhoto(start);
+}
+byId('open').onclick=byId('empty').onclick=()=>byId('picker').click();
+byId('folder').onclick=()=>byId('directory').click();
+byId('queue').onchange=()=>showPhoto(+byId('queue').value);
+for(const id of ['picker','directory'])byId(id).onchange=event=>{if(event.target.files.length)addFiles(event.target.files);event.target.value='';};
+window.addEventListener('dragover',event=>event.preventDefault());
+window.addEventListener('drop',event=>{event.preventDefault();byId('stage').classList.remove('drag');if(event.dataTransfer.files.length)addFiles(event.dataTransfer.files);});
+byId('stage').ondragover=()=>byId('stage').classList.add('drag');
+byId('stage').ondragleave=event=>{if(!byId('stage').contains(event.relatedTarget))byId('stage').classList.remove('drag');};
 window.addEventListener('keydown',event=>{if(event.ctrlKey&&event.key.toLowerCase()==='o'&&!byId('editor').open){event.preventDefault();byId('picker').click();}});
 byId('export').onclick=async()=>{
   const opts=snapshot();if(!opts||!state.image||state.loading||state.busy)return;const image=state.image,name=state.name,[width,height]=outSize(opts);state.busy=true;byId('export').disabled=true;let canvas;
@@ -57,4 +111,4 @@ byId('export').onclick=async()=>{
 };
 window.chrome?.webview?.addEventListener('message',event=>say(event.data));
 new ResizeObserver(()=>refresh()).observe(byId('viewport'));
-refreshVariants();Frame.loadImage('assets/wild-goose-island.jpg').then(photo=>{if(!importId)setPhoto(photo,'圣玛丽湖 · 野鹅岛',{make:'Nikon',model:'Nikon Z 6',focal:'35mm',aperture:'F8',shutter:'1/250s',iso:'ISO100'},true,false);}).catch(()=>say('可点击「打开照片」开始编辑。'));
+refreshVariants();

@@ -38,8 +38,8 @@ aside {background:var(--panel);border-left:1px solid var(--line);display:flex;fl
 #styles button {padding:3px;border:1px solid light-dark(#bbb,#444);background:light-dark(#f3f3f3,#292929)}
 #styles [aria-pressed=true] {border-color:light-dark(#222,#eee)}
 .thumb {display:grid;place-items:center;position:relative;overflow:hidden;width:100%;height:53px;border-radius:2px;background:#b1b1b1;filter:grayscale(1)}
-.thumb i {width:68%;height:72%;border:2px solid white;border-bottom-width:5px;background:center/cover url("assets/wild-goose-island.jpg");z-index:1;box-shadow:0 1px 3px #0005}
-.thumb.blur:before {content:"";position:absolute;inset:-6px;background:center/cover url("assets/wild-goose-island.jpg");filter:blur(5px) brightness(.8)}
+.thumb i {width:68%;height:72%;border:2px solid white;border-bottom-width:5px;background:linear-gradient(145deg,#424242 36%,#999 37%,#696969 62%,#bbb 63%);z-index:1;box-shadow:0 1px 3px #0005}
+.thumb.blur:before {content:"";position:absolute;inset:-6px;background:linear-gradient(145deg,#424242 36%,#999 37%,#696969 62%,#bbb 63%);filter:blur(5px) brightness(.8)}
 .thumb.blur i {border:none;border-radius:3px}
 #ratios {display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 #ratios button,#fit button {border:1px solid light-dark(#ccc,#424242);font:12px Consolas,monospace;border-radius:4px}
@@ -75,3 +75,6 @@ dialog::backdrop {background:#0009}
 :root[data-theme=light]{color-scheme:light}
 :root[data-theme=dark]{color-scheme:dark}
 #theme{width:auto}
+#empty{display:flex;gap:10px;align-items:center;color:var(--quiet);border:1px dashed var(--line);padding:15px 24px}
+#queue{align-self:center;width:calc(100% - 40px);margin:16px 0 0}
+@media(max-width:540px){header{height:auto;min-height:60px;flex-wrap:wrap;padding:8px}.source{flex:1}nav{gap:3px}}
