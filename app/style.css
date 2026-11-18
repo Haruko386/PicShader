@@ -77,9 +77,10 @@ dialog::backdrop {background:#0009}
 
 #empty{width:64px;height:64px;color:var(--quiet);border:1px dashed var(--line);border-radius:12px}
 #empty svg{width:26px;height:26px}
-.logo-strip{display:flex;overflow-x:auto;gap:6px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding:3px 2px 6px}
+.logo-strip{display:flex;overflow-x:auto;overflow-y:hidden;gap:6px;scroll-snap-type:x proximity;scrollbar-width:none;padding:3px 2px}
+.logo-strip::-webkit-scrollbar{display:none}
 .logo-strip button{position:relative;flex:0 0 62px;height:46px;scroll-snap-align:center;padding:5px;color:#151515;background:light-dark(#e7e7e7,#c5c5c5);border-radius:5px;border:1px solid transparent;font-size:11px;font-weight:650}
-.logo-strip img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.logo-strip img{display:block;width:100%;height:100%;min-width:0;min-height:0;object-fit:contain;pointer-events:none}
 .logo-strip [aria-pressed=true]{outline:2px solid light-dark(#222,#eee);outline-offset:0;border:2px solid var(--panel)}
 .logo-strip button:focus-visible{outline:2px dashed currentColor;outline-offset:-4px}
 .logo-strip button:hover{background:#d5d5d5}
