@@ -1,9 +1,9 @@
 'use strict';
 const Frame = (() => {
   const surface = (width, height) => Object.assign(document.createElement('canvas'), { width, height });
-  const labels = { word: '品牌字标', icon: '图形标志', petals: '花瓣标志', badge: '黄色方标', text: '纯文字' };
+  const labels = { word: '品牌字标', whiteWord: '白色字标', icon: '图形标志', petals: '花瓣标志', badge: '黄色方标', text: '纯文字' };
   const brands = {
-    sony: ['SONY', { word: 'sony.svg' }], nikon: ['Nikon', { word: 'nikon.svg', badge: 'nikon-badge.svg' }],
+    sony: ['SONY', { word: 'sony.svg' }], nikon: ['Nikon', { word: 'nikon.svg', badge: 'nikon-badge.svg', whiteWord: 'nikon.svg' }],
     huawei: ['HUAWEI', { word: 'huawei-word.png', petals: 'huawei-petals.png' }], canon: ['Canon', { word: 'canon.svg' }],
     fujifilm: ['FUJIFILM', { word: 'fujifilm.svg' }], leica: ['Leica', { icon: 'leica.svg', text: null }],
     dji: ['DJI', { word: 'dji.svg' }], apple: ['Apple', { icon: 'apple.svg', text: null }], xiaomi: ['Xiaomi', { icon: 'xiaomi.svg', text: null }],
@@ -73,7 +73,7 @@ const Frame = (() => {
     ctx.save(); if (blur) { ctx.beginPath(); ctx.roundRect(left, top, pw, ph, short * .025); ctx.clip(); }
     ctx.fillStyle = 'white'; ctx.fillRect(left, top, pw, ph); if (options.fit === 'cover') cover(ctx, image, left, top, pw, ph); else ctx.drawImage(image, left, top, pw, ph); ctx.restore();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = blur ? '#fff' : '#151815'; let cursor = top + ph + after;
-    if (title) { if (logoSet) { const mark = blur && !['badge', 'petals'].includes(options.variant) ? logoSet.white : logoSet.color; const fit = Math.min(logoHeight / mark.height, maxW * .72 / mark.width); ctx.drawImage(mark, (width - mark.width * fit) / 2, cursor + (logoHeight - mark.height * fit) / 2, mark.width * fit, mark.height * fit); } else { ctx.font = '700 ' + logoHeight + 'px "Segoe UI", sans-serif'; ctx.fillText(title, width / 2, cursor + logoHeight * .5, maxW); } cursor += logoHeight + gap; }
+    if (title) { if (logoSet) { const mark = (options.variant === 'whiteWord' || (blur && options.brand !== 'nikon' && !['badge', 'petals'].includes(options.variant))) ? logoSet.white : logoSet.color; const fit = Math.min(logoHeight / mark.height, maxW * .72 / mark.width); ctx.drawImage(mark, (width - mark.width * fit) / 2, cursor + (logoHeight - mark.height * fit) / 2, mark.width * fit, mark.height * fit); } else { ctx.font = '700 ' + logoHeight + 'px "Segoe UI", sans-serif'; ctx.fillText(title, width / 2, cursor + logoHeight * .5, maxW); } cursor += logoHeight + gap; }
     ctx.font = textSize + 'px "Segoe UI", "Microsoft YaHei UI", sans-serif'; if (blur) { ctx.shadowColor = '#000a'; ctx.shadowBlur = short * .004; } else ctx.fillStyle = '#4c514e';
     if (model) { ctx.fillText(model, width / 2, cursor + textSize * .5, maxW); cursor += textSize + gap * .5; } if (specs) ctx.fillText(specs, width / 2, cursor + textSize * .5, maxW); ctx.shadowBlur = 0;
   }

@@ -1,22 +1,108 @@
 'use strict';
 const byId = id => document.getElementById(id);
 const theme = byId('theme');
+const themeNames={system:'跟随系统',light:'浅色',dark:'深色'};
 function setTheme(mode) {
-  theme.value = ['light','dark'].includes(mode) ? mode : 'system';
-  document.documentElement.dataset.theme = theme.value;
+  const modes=Object.keys(themeNames);
+  const current=modes.includes(mode)?mode:'system';
+  const next=modes[(modes.indexOf(current)+1)%modes.length];
+  document.documentElement.dataset.theme=current;
+  theme.querySelector('use').setAttribute('href','#i-'+current);
+  theme.title=themeNames[current]+' · 切换到'+themeNames[next];
+  theme.setAttribute('aria-label',theme.title);
+  theme.onclick=()=>{setTheme(next);try{localStorage.setItem('theme',next);}catch{}};
 }
 try {setTheme(localStorage.getItem('theme'));} catch {setTheme('system');}
-theme.onchange = () => {setTheme(theme.value); try {localStorage.setItem('theme',theme.value);} catch {}};
 const state = {style:'white',fit:'contain',preset:'3:2',meta:Frame.metadata(),image:null,name:'',note:'',showModel:false,busy:false,loading:false};
 let importId=0, revision=0, toastTimer;
 function say(text){const box=byId('toast');box.textContent=text;box.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.classList.remove('on'),3600);}
-function selectOptions(select,items){select.replaceChildren(...items.map(([value,text])=>new Option(text,value)));}
-selectOptions(byId('brand'),Object.entries(Frame.brands).map(([key,[name]])=>[key,name]));
-function refreshVariants(){const styles=Frame.brands[byId('brand').value][1];selectOptions(byId('variant'),Object.keys(styles).map(key=>[key,Frame.labels[key]]));byId('variant').disabled=!Object.keys(styles).length;}
+let selectedBrand='sony', selectedVariant='word';
+function icon(name) {return '<svg aria-hidden="true"><use href="#i-'+name+'"/></svg>';}
+function logoTile(key,type,label,previewVariant) {
+  const button=document.createElement('button');
+  button.type='button'; button.dataset.key=key; button.title=label;
+  button.setAttribute('aria-label',label);
+  const brand=type==='brand'?key:selectedBrand;
+  const variant=previewVariant || key;
+  const file=Frame.brands[brand][1][variant];
+  if(file){
+    const img=document.createElement('img');
+    img.src='assets/logos/'+file; img.alt=''; img.draggable=false;
+    if(type==='variant' && variant==='whiteWord')button.classList.add('white-word');
+    button.append(img);
+  }else if(brand==='none'||brand==='other'){
+    button.innerHTML=icon(brand==='none'?'none':'text');
+  }else{
+    button.textContent=Frame.brands[brand][0];
+  }
+  return button;
+}
+function selectTile(strip,key,reveal){
+  for(const button of strip.children){
+    const active=button.dataset.key===key;
+    button.setAttribute('aria-pressed',active);
+    if(active && reveal){
+      const delta=button.getBoundingClientRect().left-strip.getBoundingClientRect().left;
+      if(delta<0 || delta+button.offsetWidth>strip.clientWidth) strip.scrollLeft+=delta-(strip.clientWidth-button.offsetWidth)/2;
+    }
+  }
+}
+function chooseBrand(brand,variant) {
+  selectedBrand=brand;
+  const variants=Object.keys(Frame.brands[brand][1]);
+  selectedVariant=variants.includes(variant)?variant:(variants[0] || '');
+  const strip=byId('variant');
+  strip.replaceChildren();
+  strip.hidden=variants.length<2;
+  if(!strip.hidden)for(const key of variants){
+    const button=logoTile(key,'variant',Frame.brands[brand][0]+' · '+Frame.labels[key]);
+    button.onclick=()=>{selectedVariant=key;selectTile(strip,key,true);refresh();};
+    strip.append(button);
+  }
+  selectTile(strip,selectedVariant,true);selectTile(byId('brand'),brand,true);
+}
+for(const [key,[name,variants]] of Object.entries(Frame.brands)){
+  const button=logoTile(key,'brand',name,Object.keys(variants)[0]);
+  button.onclick=()=>{if(key!==selectedBrand){chooseBrand(key);refresh();}};
+  byId('brand').append(button);
+}
+for(const strip of [byId('brand'),byId('variant')]){
+  strip.addEventListener('wheel',event=>{
+    if(event.ctrlKey||event.shiftKey||Math.abs(event.deltaX)>Math.abs(event.deltaY))return;
+    const before=strip.scrollLeft;
+    strip.scrollLeft+=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?strip.clientWidth:1);
+    if(before!==strip.scrollLeft)event.preventDefault();
+  },{passive:false});
+  let drag=null, suppressClick=false;
+  strip.addEventListener('pointerdown',event=>{
+    suppressClick=false;
+    if(event.pointerType==='mouse' && event.button===0 && strip.scrollWidth>strip.clientWidth)
+      drag={id:event.pointerId,start:event.clientX,left:strip.scrollLeft};
+  });
+  strip.addEventListener('pointermove',event=>{
+    if(!drag || event.pointerId!==drag.id)return;
+    if(!event.buttons){drag=null;return;}
+    const delta=event.clientX-drag.start;
+    if(!suppressClick && Math.abs(delta)<5)return;
+    suppressClick=true;strip.classList.add('dragging');strip.setPointerCapture(event.pointerId);
+    strip.scrollLeft=drag.left-delta;
+  });
+  const endDrag=()=>{drag=null;strip.classList.remove('dragging');};
+  strip.addEventListener('pointerup',endDrag);strip.addEventListener('pointercancel',endDrag);
+  strip.addEventListener('click',event=>{
+    if(suppressClick && event.detail){event.stopImmediatePropagation();suppressClick=false;}
+  },true);
+  strip.onkeydown=event=>{
+    const step={ArrowLeft:-1,ArrowRight:1}[event.key];
+    if(!step)return;
+    const next=step===1?event.target.nextElementSibling:event.target.previousElementSibling;
+    if(next){event.preventDefault();next.focus();next.click();}
+  };
+}
 function snapshot(){
   const pair=state.preset==='自定义'?[byId('rw').valueAsNumber,byId('rh').valueAsNumber]:state.preset.split(':').map(Number);
   const ratio=pair[0]/pair[1];if(pair.some(value=>!Number.isInteger(value)||value<1||value>10000)||ratio<.1||ratio>10)return null;
-  return {style:state.style,meta:{...state.meta},showModel:state.showModel,fit:state.fit,brand:byId('brand').value,variant:byId('variant').value,ratio,ratioText:pair.join(':'),format:byId('format').value};
+  return {style:state.style,meta:{...state.meta},showModel:state.showModel,fit:state.fit,brand:selectedBrand,variant:selectedVariant,ratio,ratioText:pair.join(':'),format:byId('format').value};
 }
 function outSize(opts){return Frame.dimensions(opts.ratio,+byId('size').value || Math.max(state.image.width,state.image.height));}
 async function refresh(){
@@ -32,7 +118,13 @@ async function refresh(){
 for(const name of ['3:4','4:3','2:3','3:2','16:9','9:16','自定义']){const button=document.createElement('button');if(name==='自定义'){button.title='自定义比例';button.setAttribute('aria-label',button.title);button.innerHTML='<svg aria-hidden="true"><use href="#i-plus"/></svg>';}else button.textContent=name;button.setAttribute('aria-pressed',name===state.preset);button.onclick=()=>{state.preset=name;for(const item of byId('ratios').children)item.setAttribute('aria-pressed',item===button);byId('custom').hidden=name!=='自定义';refresh();};byId('ratios').append(button);}
 for(const button of byId('styles').children)button.onclick=()=>{state.style=button.dataset.style;for(const item of byId('styles').children)item.setAttribute('aria-pressed',item===button);refresh();};
 for(const button of byId('fit').children)button.onclick=()=>{state.fit=button.id;for(const item of byId('fit').children)item.setAttribute('aria-pressed',item===button);refresh();};
-byId('brand').onchange=()=>{refreshVariants();refresh();};for(const id of ['size','variant','format','rw','rh'])byId(id).oninput=refresh;
+for(const id of ['format','rw','rh'])byId(id).oninput=refresh;
+byId('size').oninput=()=>{
+  const value=byId('size').value;
+  if(value==='0')byId('size-face').innerHTML=icon('length');
+  else byId('size-face').textContent=value+' px';
+  refresh();
+};
 const fields={make:'相机厂商',model:'相机型号',focal:'焦距',aperture:'光圈',shutter:'快门',iso:'感光度'};
 for(const [key,label] of Object.entries(fields)){const wrapper=document.createElement('label'),input=document.createElement('input');wrapper.textContent=label;input.id='field-'+key;input.maxLength=80;wrapper.append(input);byId('fields').append(wrapper);}
 const toggle=document.createElement('label');toggle.className='model-toggle';toggle.innerHTML='<input type="checkbox" id="show-model"> 显示型号';byId('fields').after(toggle);
@@ -58,7 +150,7 @@ async function showPhoto(index) {
   const entry = files[index];
   if (!entry) return;
   if (state.image && files[current]) files[current].edits = {
-    meta:{...state.meta}, brand:byId('brand').value, variant:byId('variant').value, showModel:state.showModel
+    meta:{...state.meta}, brand:selectedBrand, variant:selectedVariant, showModel:state.showModel
   };
   current=index;
   activeDecode?.abort();
@@ -79,9 +171,8 @@ async function showPhoto(index) {
     state.image=photo;state.name=entry.file.name;state.meta=saved?.meta || meta;state.showModel=saved?.showModel || false;
     const hasExif=Object.values(meta).some(Boolean);
     state.note=hasExif?'':'无 EXIF，可手动填写。';
-    byId('file-info').textContent=photo.width+' × '+photo.height+' px · '+(hasExif?'EXIF':'无 EXIF');
-    byId('brand').value=saved?.brand || Frame.identify(meta.make,meta.model);
-    refreshVariants(); if(saved)byId('variant').value=saved.variant;
+    byId('file-info').textContent=photo.width+' × '+photo.height+' px';
+    chooseBrand(saved?.brand || Frame.identify(meta.make,meta.model),saved?.variant);
     byId('preview').hidden=false; byId('edit').disabled=false;
   } catch(error) {
     if(serial!==importId)return;
@@ -118,4 +209,4 @@ byId('export').onclick=async()=>{
 };
 window.chrome?.webview?.addEventListener('message',event=>say(event.data));
 new ResizeObserver(()=>refresh()).observe(byId('viewport'));
-refreshVariants();
+chooseBrand('sony');

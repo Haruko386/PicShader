@@ -74,7 +74,23 @@ dialog::backdrop {background:#0009}
 }
 :root[data-theme=light]{color-scheme:light}
 :root[data-theme=dark]{color-scheme:dark}
-#theme{width:auto}
-#empty{display:flex;gap:10px;align-items:center;color:var(--quiet);border:1px dashed var(--line);padding:15px 24px}
+
+#empty{width:64px;height:64px;color:var(--quiet);border:1px dashed var(--line);border-radius:12px}
+#empty svg{width:26px;height:26px}
+.logo-strip{display:flex;overflow-x:auto;gap:6px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding:3px 2px 6px}
+.logo-strip button{position:relative;flex:0 0 62px;height:46px;scroll-snap-align:center;padding:5px;color:#151515;background:light-dark(#e7e7e7,#c5c5c5);border-radius:5px;border:1px solid transparent;font-size:11px;font-weight:650}
+.logo-strip img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.logo-strip [aria-pressed=true]{outline:2px solid light-dark(#222,#eee);outline-offset:0;border:2px solid var(--panel)}
+.logo-strip button:focus-visible{outline:2px dashed currentColor;outline-offset:-4px}
+.logo-strip button:hover{background:#d5d5d5}
+.logo-strip.variants{margin-bottom:8px}
+.variants button{flex-basis:54px;height:37px}
+.variants .white-word{background:#555}.white-word img{filter:brightness(0) invert(1)}
+.size-control{position:relative;display:grid;align-items:center;border:1px solid light-dark(#c3c3c3,#494949);border-radius:4px;background:light-dark(#f3f3f3,#292929);padding-left:8px;font:12px Consolas,monospace}
+.size-control:after{content:"";position:absolute;right:8px;width:5px;height:5px;border:solid currentColor;border-width:0 1px 1px 0;transform:rotate(45deg);pointer-events:none}
+#size-face{display:flex;align-items:center}#size-face svg{width:17px;height:17px}
+.size-control select{position:absolute;inset:0;opacity:0;cursor:pointer}
+.size-control:focus-within{outline:2px solid currentColor;outline-offset:2px}
 #queue{align-self:center;width:calc(100% - 40px);margin:16px 0 0}
 @media(max-width:540px){header{height:auto;min-height:60px;flex-wrap:wrap;padding:8px}.source{flex:1}nav{gap:3px}}
+.logo-strip{user-select:none}.logo-strip.dragging{scroll-snap-type:none;cursor:grabbing}
