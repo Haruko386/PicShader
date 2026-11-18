@@ -1,0 +1,74 @@
+:root {
+  color-scheme: dark;
+  --back:#171717; --panel:#202020; --line:#393939; --quiet:#aaa;
+  font:14px/1.45 "Segoe UI","Microsoft YaHei UI",sans-serif;
+  color:#eee; background:var(--back); accent-color:#ddd;
+}
+* {box-sizing:border-box}
+body {margin:0}
+.defs,[hidden]{display:none!important}
+svg {width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linejoin:round;stroke-linecap:round}
+button,select,input {font:inherit;color:inherit}
+button {display:inline-grid;place-items:center;cursor:pointer;border:1px solid transparent;background:transparent;border-radius:6px;min-width:36px;min-height:36px;padding:6px}
+button:hover {background:#373737}
+button:focus-visible,input:focus-visible,select:focus-visible {outline:2px solid #fff;outline-offset:3px}
+button:disabled {opacity:.4;cursor:default}
+header {height:60px;display:flex;align-items:center;gap:18px;padding:0 24px;background:#1b1b1b;border-bottom:1px solid var(--line)}
+.mark {display:grid;place-items:center;border-right:1px solid var(--line);padding-right:17px}
+.mark svg {width:30px;height:30px}
+.source {display:flex;align-items:baseline;gap:12px;min-width:0}
+.source strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:550}
+.source span,output {font:12px/1.5 Consolas,"Microsoft YaHei UI",monospace;color:var(--quiet)}
+.source span {white-space:nowrap}
+nav {display:flex;gap:7px;margin-left:auto}
+#open {border-color:#535353}
+main {display:grid;grid-template-columns:minmax(0,1fr) 306px;height:calc(100dvh - 60px)}
+.stage {position:relative;padding:clamp(28px,5vmin,68px);min-height:0;min-width:0}
+#viewport {display:grid;place-items:center;width:100%;height:100%;min-height:0}
+#preview {display:block;max-width:100%;max-height:100%;box-shadow:0 12px 35px #0006,0 1px 3px #0008}
+.drop-hint {display:none;position:absolute;inset:14px;border:1px dashed #999;background:#222e;place-items:center;pointer-events:none}
+.drop-hint svg {width:50px;height:50px}.drag .drop-hint {display:grid}
+aside {background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.controls {overflow:auto;scrollbar-width:thin;padding:4px 20px;flex:1}
+.controls section {display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;padding:24px 0;border-bottom:1px solid var(--line)}
+.controls section:last-child {border:0}
+.group-icon {color:var(--quiet);padding-top:9px}
+.group-icon svg {width:17px;height:17px}
+#styles,.pair {display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#styles button {padding:3px;border:1px solid #444;background:#292929}
+#styles [aria-pressed=true] {border-color:#eee}
+.thumb {display:grid;place-items:center;position:relative;overflow:hidden;width:100%;height:53px;border-radius:2px;background:#b1b1b1;filter:grayscale(1)}
+.thumb i {width:68%;height:72%;border:2px solid white;border-bottom-width:5px;background:center/cover url("assets/wild-goose-island.jpg");z-index:1;box-shadow:0 1px 3px #0005}
+.thumb.blur:before {content:"";position:absolute;inset:-6px;background:center/cover url("assets/wild-goose-island.jpg");filter:blur(5px) brightness(.8)}
+.thumb.blur i {border:none;border-radius:3px}
+#ratios {display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+#ratios button,#fit button {border:1px solid #424242;font:12px Consolas,monospace;border-radius:4px}
+#ratios [aria-pressed=true],#fit [aria-pressed=true] {background:#e5e5e5;color:#191919;border-color:#e5e5e5}
+#ratios button:last-child {grid-column:span 3;min-height:29px}
+#ratios button:last-child svg {width:16px;height:16px}
+#fit {display:flex;gap:5px;margin-top:12px}
+#fit button {min-width:44px}
+select,input:not([type=checkbox]) {width:100%;min-width:0;background:#292929;color:#eee;border:1px solid #494949;border-radius:4px;padding:8px 5px;font-size:12px}
+select {cursor:pointer}
+#custom {display:flex;align-items:center;gap:7px;margin-top:8px;color:#bbb}
+footer {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-top:1px solid var(--line)}
+#export,.primary {background:#ececec;color:#151515;min-width:54px}
+#export:hover,.primary:hover {background:#fff}
+dialog {width:min(390px,94vw);background:#242424;color:#eee;border:1px solid #555;border-radius:9px;padding:20px 24px;box-shadow:0 12px 60px #0007}
+dialog::backdrop {background:#0009}
+.dialog-head,.dialog-actions {display:flex;align-items:center;justify-content:space-between}
+.dialog-head h2 {font-size:16px;font-weight:550;margin:0}
+#meta-note {font-size:12px;color:#bbb;margin:0 0 14px}
+#meta-note:empty {display:none}
+#fields {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#fields label {display:grid;gap:5px;font-size:12px;color:#ccc}
+.model-toggle {display:flex;gap:7px;align-items:center;margin-top:16px;font-size:12px}
+.dialog-actions {justify-content:flex-end;margin-top:12px}
+#toast {position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#eee;color:#151515;padding:9px 15px;border-radius:6px;opacity:0;pointer-events:none;z-index:3}
+#toast.on {opacity:1}
+@media(max-width:720px) {
+  header {padding:0 12px;gap:10px}.source {display:grid;gap:0}.source span {font-size:10px}
+  main {display:flex;height:auto;flex-direction:column}.stage {height:55dvh;padding:22px}
+  aside {border-left:0;border-top:1px solid var(--line)}.controls {overflow:visible}
+  .controls section {padding:15px 0}.thumb {height:60px}footer {position:sticky;bottom:0;background:var(--panel)}
+}
