@@ -1,5 +1,12 @@
 'use strict';
 const byId = id => document.getElementById(id);
+const theme = byId('theme');
+function setTheme(mode) {
+  theme.value = ['light','dark'].includes(mode) ? mode : 'system';
+  document.documentElement.dataset.theme = theme.value;
+}
+try {setTheme(localStorage.getItem('theme'));} catch {setTheme('system');}
+theme.onchange = () => {setTheme(theme.value); try {localStorage.setItem('theme',theme.value);} catch {}};
 const state = {style:'white',fit:'contain',preset:'3:2',meta:Frame.metadata(),image:null,name:'',note:'',showModel:false,busy:false,loading:false};
 let importId=0, revision=0, toastTimer;
 function say(text){const box=byId('toast');box.textContent=text;box.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.classList.remove('on'),3600);}
