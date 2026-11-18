@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; object-src 'none'; base-uri 'none'">
   <title>映框</title><link rel="stylesheet" href="style.css">
   <script defer src="vendor/exifr-lite.js"></script><script defer src="render.js"></script><script defer src="studio.js"></script>
 </head>
@@ -45,7 +45,7 @@
       <footer><output id="output" aria-label="导出尺寸"></output><button id="export" title="导出照片" aria-label="导出照片" disabled><svg aria-hidden="true"><use href="#i-save"/></svg></button></footer>
     </aside>
   </main>
-  <input type="file" id="picker" multiple accept=".jpg,.jpeg,.png,.webp,.bmp,.avif,.gif" hidden>
+  <input type="file" id="picker" multiple  hidden>
   <input type="file" id="directory" webkitdirectory multiple hidden>
   <dialog id="editor" aria-labelledby="meta-title"><form method="dialog">
     <div class="dialog-head"><h2 id="meta-title">照片参数</h2><button id="cancel" title="取消" aria-label="取消" type="button"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div>

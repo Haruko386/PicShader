@@ -40,9 +40,14 @@ byId('edit').onclick=()=>{for(const key of Object.keys(fields))byId('field-'+key
 byId('editor').addEventListener('close',()=>{if(byId('editor').returnValue!=='apply')return;for(const key of Object.keys(fields))state.meta[key]=byId('field-'+key).value.trim();state.showModel=byId('show-model').checked;refresh();});
 const files = [];
 const rasterPattern = /[.](jpe?g|png|webp|bmp|avif|gif)$/i;
+const rawExtensions = 'dng arw sr2 srf nef nrw cr2 cr3 crw raf orf rw2 pef srw 3fr fff iiq rwl erf mrw x3f'.split(' ');
+const isRaw = file => rawExtensions.includes(file.name.split('.').pop().toLowerCase());
+byId('picker').accept = ['jpg','jpeg','png','webp','bmp','avif','gif',...rawExtensions].map(ext=>'.'+ext).join(',');
+let activeDecode;
 let current = -1;
-function supported(file) {return rasterPattern.test(file.name);}
-async function decodePhoto(file) {
+function supported(file) {return rasterPattern.test(file.name) || isRaw(file);}
+async function decodePhoto(file,signal) {
+  if(isRaw(file))return (await import("./raw.js")).decodeRaw(file,signal);
   const url = URL.createObjectURL(file);
   try {
     const [photo,tags] = await Promise.all([Frame.loadImage(url),exifr.parse(file,{gps:false}).catch(()=>null)]);
@@ -56,6 +61,8 @@ async function showPhoto(index) {
     meta:{...state.meta}, brand:byId('brand').value, variant:byId('variant').value, showModel:state.showModel
   };
   current=index;
+  activeDecode?.abort();
+  activeDecode=new AbortController();
   const serial=++importId;
   ++revision;
   state.image=null; state.loading=true;
@@ -66,7 +73,7 @@ async function showPhoto(index) {
   byId('output').textContent='';
   byId('edit').disabled=byId('export').disabled=true;
   try {
-    const {photo,meta}=await decodePhoto(entry.file);
+    const {photo,meta}=await decodePhoto(entry.file,activeDecode.signal);
     if (serial!==importId) return;
     const saved=entry.edits;
     state.image=photo;state.name=entry.file.name;state.meta=saved?.meta || meta;state.showModel=saved?.showModel || false;
@@ -80,7 +87,7 @@ async function showPhoto(index) {
     if(serial!==importId)return;
     byId('file-info').textContent='无法读取';
     byId('empty').hidden=false;
-    say('无法读取 '+entry.file.name+'，请检查文件或切换照片。');
+    say(isRaw(entry.file)?'RAW 解码失败：'+(error.message || '机型或压缩方式暂不支持'):'无法读取 '+entry.file.name+'，请检查文件或切换照片。');
   } finally {if(serial===importId){state.loading=false;refresh();}}
 }
 function addFiles(input) {

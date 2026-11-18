@@ -35,7 +35,29 @@ internal sealed class StudioWindow : Form
             core.Settings.AreDefaultContextMenusEnabled = false;
             core.Settings.IsStatusBarEnabled = false;
             core.Settings.IsZoomControlEnabled = false;
-            core.SetVirtualHostNameToFolderMapping("frame-studio.local", app, CoreWebView2HostResourceAccessKind.Deny);
+            core.AddWebResourceRequestedFilter(Origin + "/*", CoreWebView2WebResourceContext.All, CoreWebView2WebResourceRequestSourceKinds.All);
+            core.WebResourceRequested += (source, evt) => {
+                Uri uri = new Uri(evt.Request.Uri);
+                string path = Uri.UnescapeDataString(uri.AbsolutePath).TrimStart('/');
+                string root = Path.GetFullPath(app) + Path.DirectorySeparatorChar;
+                string file = Path.GetFullPath(Path.Combine(root, path));
+                if (!file.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !File.Exists(file)) {
+                    evt.Response = environment.CreateWebResourceResponse(null, 404, "Not Found", "");
+                    return;
+                }
+                string mime;
+                switch (Path.GetExtension(file).ToLowerInvariant()) {
+                    case ".html": mime = "text/html; charset=utf-8"; break;
+                    case ".css": mime = "text/css"; break;
+                    case ".js": mime = "text/javascript"; break;
+                    case ".wasm": mime = "application/wasm"; break;
+                    case ".svg": mime = "image/svg+xml"; break;
+                    case ".png": mime = "image/png"; break;
+                    default: mime = "application/octet-stream"; break;
+                }
+                evt.Response = environment.CreateWebResourceResponse(new MemoryStream(File.ReadAllBytes(file)), 200, "OK",
+                    "Content-Type: " + mime + "\r\nCross-Origin-Opener-Policy: same-origin\r\nCross-Origin-Embedder-Policy: require-corp\r\nCache-Control: no-store");
+            };
             core.NavigationStarting += (source, evt) => { if (evt.Uri != Origin + "/index.html") evt.Cancel = true; };
             core.NewWindowRequested += (source, evt) => { evt.Handled = true; };
             core.DownloadStarting += ChooseDestination;
