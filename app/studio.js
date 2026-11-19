@@ -6,7 +6,8 @@ function setTheme(mode) {
   const modes=Object.keys(themeNames);
   const current=modes.includes(mode)?mode:'system';
   const next=modes[(modes.indexOf(current)+1)%modes.length];
-  document.documentElement.dataset.theme=current;
+  document.documentElement.dataset.theme=current==='system' && window.StudioPhone ? (StudioPhone.dark()?'dark':'light') : current;
+  window.syncPhoneTheme=()=>setTheme(current);
   theme.querySelector('use').setAttribute('href','#i-'+current);
   theme.title=themeNames[current]+' · 切换到'+themeNames[next];
   theme.setAttribute('aria-label',theme.title);
@@ -139,6 +140,11 @@ let activeDecode;
 let current = -1;
 function supported(file) {return rasterPattern.test(file.name) || isRaw(file);}
 async function decodePhoto(file,signal) {
+  if(file.source && window.StudioPhone){
+    const response=await fetch(file.source,{signal});
+    if(!response.ok)throw Error('无法读取照片');
+    file=new File([await response.blob()],file.name);
+  }
   if(isRaw(file))return (await import("./raw.js")).decodeRaw(file,signal);
   const url = URL.createObjectURL(file);
   try {
@@ -193,18 +199,35 @@ function addFiles(input) {
   byId('queue').append(options);byId('queue').hidden=files.length<2;
   return showPhoto(start);
 }
-byId('open').onclick=byId('empty').onclick=()=>byId('picker').click();
-byId('folder').onclick=()=>byId('directory').click();
+byId('open').onclick=byId('empty').onclick=()=>window.StudioPhone?StudioPhone.pick(false):byId('picker').click();
+byId('folder').onclick=()=>window.StudioPhone?StudioPhone.pick(true):byId('directory').click();
 byId('queue').onchange=()=>showPhoto(+byId('queue').value);
 for(const id of ['picker','directory'])byId(id).onchange=event=>{if(event.target.files.length)addFiles(event.target.files);event.target.value='';};
 window.addEventListener('dragover',event=>event.preventDefault());
 window.addEventListener('drop',event=>{event.preventDefault();byId('stage').classList.remove('drag');if(event.dataTransfer.files.length)addFiles(event.dataTransfer.files);});
 byId('stage').ondragover=()=>byId('stage').classList.add('drag');
 byId('stage').ondragleave=event=>{if(!byId('stage').contains(event.relatedTarget))byId('stage').classList.remove('drag');};
-window.addEventListener('keydown',event=>{if(event.ctrlKey&&event.key.toLowerCase()==='o'&&!byId('editor').open){event.preventDefault();byId('picker').click();}});
+window.addEventListener('keydown',event=>{if(event.ctrlKey&&event.key.toLowerCase()==='o'&&!byId('editor').open){event.preventDefault();byId('open').click();}});
+async function savePhone(blob,name,png){
+  if(!StudioPhone.begin())throw Error('已有导出任务');
+  try{
+    for(let offset=0;offset<blob.size;offset+=196608){
+      const chunk=blob.slice(offset,offset+196608);
+      const encoded=await new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(reader.result.split(',')[1]);
+        reader.onerror=()=>reject(reader.error);
+        reader.readAsDataURL(chunk);
+      });
+      if(!StudioPhone.append(encoded))throw Error('无法写入');
+    }
+    StudioPhone.save(name,png);
+  }catch(error){StudioPhone.cancel();throw error;}
+}
 byId('export').onclick=async()=>{
   const opts=snapshot();if(!opts||!state.image||state.loading||state.busy)return;const image=state.image,name=state.name,[width,height]=outSize(opts);state.busy=true;byId('export').disabled=true;let canvas;
-  try{const logo=await Frame.logo(opts.brand,opts.variant);canvas=Frame.surface(width,height);Frame.render(canvas,image,opts,logo);const jpeg=opts.format==='JPEG';const blob=await new Promise(resolve=>canvas.toBlob(resolve,jpeg?'image/jpeg':'image/png',.95));if(!blob)throw Error('encode');const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=name.replace(/[.][^.]+$/,'')+'-'+opts.style+'-'+opts.ratioText.replace(':','x')+(jpeg?'.jpg':'.png');document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),120000);if(!window.chrome?.webview)say('已开始下载照片');}
+  try{const logo=await Frame.logo(opts.brand,opts.variant);canvas=Frame.surface(width,height);Frame.render(canvas,image,opts,logo);const jpeg=opts.format==='JPEG';const blob=await new Promise(resolve=>canvas.toBlob(resolve,jpeg?'image/jpeg':'image/png',.95));if(!blob)throw Error('encode');const filename=name.replace(/[.][^.]+$/,'')+'-'+opts.style+'-'+opts.ratioText.replace(':','x')+(jpeg?'.jpg':'.png');if(window.StudioPhone){await savePhone(blob,filename,!jpeg);return;}
+    const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),120000);if(!window.chrome?.webview)say('已开始下载照片');}
   catch{say('导出失败，请选择较小的导出尺寸再试。');}finally{if(canvas){canvas.width=1;canvas.height=1;}state.busy=false;refresh();}
 };
 window.chrome?.webview?.addEventListener('message',event=>say(event.data));
